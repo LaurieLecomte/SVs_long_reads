@@ -24,7 +24,7 @@ then
 fi
 
 # 1. Call SVs in whole genome
-svim alignment $CALLS_DIR/svim/$SAMPLE $BAM_DIR/"$SAMPLE".bam $GENOME --insertion_sequences --read_names --sample $SAMPLE --max_consensus_length=50000
+svim alignment $CALLS_DIR/svim/$SAMPLE $BAM_DIR/"$SAMPLE".bam $GENOME --insertion_sequences --read_names --interspersed_duplications_as_insertions --sample $SAMPLE --max_consensus_length=50000
 
 # 2. Sort, compress and index
 bcftools sort $CALLS_DIR/svim/$SAMPLE/variants.vcf > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf
@@ -32,4 +32,14 @@ bgzip $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf
 tabix -p vcf $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
 
 # 3. Filter out unplaced contigs
-bcftools filter -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/svim/"$SAMPLE".vcf
+bcftools view -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_allcontigs.vcf.gz > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf
+
+# 3. Filter for PASS and PRECISE calls
+bcftools filter -i 'FILTER="PASS" & PRECISE=1 & SVTYPE!="BND"' $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/svim/"$SAMPLE"_PASS.vcf
+
+
+# 3. Filter out unplaced contigs
+#bcftools filter -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/svim/"$SAMPLE".vcf
+
+# 2. Filter out BNDs, unplaced contigs
+#bcftools view -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz | bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' > $CALLS_DIR/svim/"$SAMPLE".vcf

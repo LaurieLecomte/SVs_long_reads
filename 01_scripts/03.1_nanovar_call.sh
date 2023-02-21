@@ -2,6 +2,8 @@
 
 # Call SVs with nanovar across whole genome, including unplaced contigs which will be removed after
 
+# Nanovar indexes are picky and will crash if other indexes are present in the genome directory, so we need to provide a genome directory in which Nanovar can add its own indexes
+
 # Genome indexing steps prior to SV calling are very LONG, so we run run these steps only once for the fi
 # valeria
 #

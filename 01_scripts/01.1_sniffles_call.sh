@@ -26,5 +26,8 @@ fi
 # 1. Call SVs in whole genome
 sniffles --input $BAM_DIR/"$SAMPLE".bam --vcf $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_allcontigs.vcf.gz --snf $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".snf --threads $CPU --reference $GENOME --sample-id $SAMPLE --output-rnames --combine-consensus --allow-overwrite
 
-# 2. Filter out unplaced contigs
-bcftools view -R $CHR_BED $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_allcontigs.vcf.gz > $CALLS_DIR/sniffles/"$SAMPLE".vcf
+# 2. Filter out BNDs, unplaced contigs
+bcftools view -R $CHR_BED $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_allcontigs.vcf.gz > $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".vcf
+
+# 3. Filter for PASS and PRECISE calls
+bcftools filter -i 'FILTER="PASS" & PRECISE=1 & SVTYPE!="BND"' $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/sniffles/"$SAMPLE"_PASS_PRECISE.vcf

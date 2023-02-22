@@ -32,7 +32,7 @@ bgzip $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf
 tabix -p vcf $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
 
 # 3. Filter out unplaced contigs
-bcftools view -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_allcontigs.vcf.gz > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf
+bcftools view -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf
 
 # 3. Filter for PASS and PRECISE calls
 bcftools filter -i 'FILTER="PASS" & PRECISE=1 & SVTYPE!="BND"' $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/svim/"$SAMPLE"_PASS.vcf

@@ -26,4 +26,4 @@ ls -1 $CALLS_DIR/svim/*.vcf > $VCF_LIST_SVIM
 ls -1 $BAM_DIR/*.bam > $BAM_LIST
 
 # 3. Merge samples VCFs and refine ALT sequences with Iris 
-jasmine file_list=$VCF_LIST_svim out_file=$MERGED_DIR/svim/merged_refined_distlin0.1_dist50.vcf out_dir=$MERGED_DIR/svim genome_file=$GENOME bam_list=$BAM_LIST --mutual_distance --output_genotypes --normalize_type --allow_intrasample --ignore_strand threads=$CPU --run_iris iris_args=--keep_long_variants --max_dist_linear=0.1 --min_dist=50
+jasmine file_list=$VCF_LIST_svim out_file=$MERGED_DIR/svim/merged_refined_distlin0.1_dist50.vcf out_dir=$MERGED_DIR/svim genome_file=$GENOME bam_list=$BAM_LIST --mutual_distance --output_genotypes --normalize_type --allow_intrasample --ignore_strand threads=$CPU --max_dist_linear=0.1 --min_dist=50 --run_iris iris_args=--keep_long_variants,--also_deletions

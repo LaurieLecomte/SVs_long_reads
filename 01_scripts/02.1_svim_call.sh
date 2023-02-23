@@ -2,8 +2,13 @@
 
 # Call SVs with svim2 across whole genome, including unplaced contigs which will be removed after
 
-# valeria
+# valeria : svim cannot read sample names from -a arg of parallel.. no idea why, investigate with 1KB log files named 02.1_svim_call_{}_%j.log
 # parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 1 -p ibis_small --mem=20G --time=1-00:00:00 -J 02.1_svim_call_{} -o log/02.1_svim_call_{}_%j.log /bin/sh ./01_scripts/02.1_svim_call.sh {} &
+
+# srun -c 1 -p ibis_small --mem=20G --time=1-00:00:00 -J 02.1_svim_call_13070 -o log/02.1_svim_call_13070_%j.log /bin/sh ./01_scripts/02.1_svim_call.sh 13070 &
+# srun -c 1 -p ibis_small --mem=20G --time=1-00:00:00 -J 02.1_svim_call_14010 -o log/02.1_svim_call_14010_%j.log /bin/sh ./01_scripts/02.1_svim_call.sh 14010 &
+# srun -c 1 -p ibis_small --mem=20G --time=1-00:00:00 -J 02.1_svim_call_14104 -o log/02.1_svim_call_14104_%j.log /bin/sh ./01_scripts/02.1_svim_call.sh 14104 &
+# srun -c 1 -p ibis_small --mem=20G --time=1-00:00:00 -J 02.1_svim_call_14062 -o log/02.1_svim_call_14062_%j.log /bin/sh ./01_scripts/02.1_svim_call.sh 14062 &
 
 # VARIABLES
 SAMPLE=$1

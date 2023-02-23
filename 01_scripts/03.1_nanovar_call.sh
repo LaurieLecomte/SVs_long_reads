@@ -10,6 +10,9 @@
 # 
 # parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p medium --time=3-00:00:00 -J 03.1_nanovar_call_{} --mem=100G -o log/03.1_nanovar_call_{}_%j.log /bin/sh ./01_scripts/03.1_nanovar_call.sh {} &
 
+
+# Possible adjustment : first run nanovar on a single sample to produce required indexes, then re-run for other (or all) samples
+
 # VARIABLES
 SAMPLE=$1
 
@@ -31,13 +34,26 @@ fi
 # 1. Run NanoVar
 nanovar $BAM_DIR/"$SAMPLE".bam $GENOME_NV $CALLS_DIR/nanovar/$SAMPLE -x ont -t $CPU 
 
-# 2. Sort, remove SVs where END is < than POS, then compress and index
-bcftools sort $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".nanovar.pass.vcf | bcftools filter -e "POS > INFO/END" > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf
-bgzip $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf
-tabix -p vcf $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
+# 2. Sort, remove SVs where END is < than POS (usually happens if a SV is at POS 1 on an uplaced contig), then compress and index
+#bcftools sort $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".nanovar.pass.vcf | bcftools filter -e "POS > INFO/END" > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf
+#bgzip $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf
+#tabix -p vcf $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
 
 # 3. Filter out unplaced contigs
-bcftools view -R $CHR_BED $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf
+#bcftools view -R $CHR_BED $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf
 
-# 3. Filter for PASS and PRECISE calls (should not do anything filter on PRECISE only because we use .pass vcf at previous step) and remove BNDs
-bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/nanovar/"$SAMPLE"_PASS.vcf
+# 4. Filter for PASS calls and SVs other than BNDs 
+#bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf
+
+# 5. Add read names
+## Extract required info from VCF
+#bcftools query -f '%CHROM\t%POS\t%ID\t%END\n' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.table
+
+## Extract and format reads from sv_support_reads.tsv
+#Rscript 01_scripts/utils/nanovar_add_rnames.R $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.table $CALLS_DIR/nanovar/$SAMPLE/sv_support_reads.tsv $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.annot
+
+## Annotate VCF with read names information
+#bgzip $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.annot
+#tabix -s1 -b2 -e4 $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.annot.gz
+
+#bcftools annotate -a $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.annot.gz -h 02_infos/annot.hdr -c CHROM,POS,ID,END,RNAMES $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf > $CALLS_DIR/nanovar/"$SAMPLE"_PASS.vcf

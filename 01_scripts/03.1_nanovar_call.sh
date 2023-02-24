@@ -32,7 +32,7 @@ CPU=10
 #fi
 
 # 1. Run NanoVar
-nanovar $BAM_DIR/"$SAMPLE".bam $GENOME_NV $CALLS_DIR/nanovar/$SAMPLE -x ont -t $CPU 
+#nanovar $BAM_DIR/"$SAMPLE".bam $GENOME_NV $CALLS_DIR/nanovar/$SAMPLE -x ont -t $CPU 
 
 # 2. Sort, remove SVs where END is < than POS (usually happens if a SV is at POS 1 on an uplaced contig), then compress and index
 bcftools sort $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".nanovar.pass.vcf | bcftools filter -e "POS > INFO/END" > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf
@@ -42,8 +42,8 @@ tabix -p vcf $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
 # 3. Filter out unplaced contigs
 bcftools view -R $CHR_BED $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf
 
-# 4. Filter for PASS calls and SVs other than BNDs 
-bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf
+# 4. Filter for PASS calls, SVs other than BNDs and supported by more than 1 read
+bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND" & SR > 1' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf
 
 # 5. Add read names
 ## Extract required info from VCF

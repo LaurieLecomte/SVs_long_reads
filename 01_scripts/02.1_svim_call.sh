@@ -29,7 +29,7 @@ CPU=1
 #fi
 
 # 1. Call SVs in whole genome
-svim alignment $CALLS_DIR/svim/$SAMPLE $BAM_DIR/"$SAMPLE".bam $GENOME --insertion_sequences --read_names --sample $SAMPLE --max_consensus_length=500000 --interspersed_duplications_as_insertions
+#svim alignment $CALLS_DIR/svim/$SAMPLE $BAM_DIR/"$SAMPLE".bam $GENOME --insertion_sequences --read_names --sample $SAMPLE --max_consensus_length=500000 --interspersed_duplications_as_insertions
 
 # 2. Sort, remove SVs where END is < than POS (usually happens if a SV is at POS 1 on an uplaced contig), then compress and index
 bcftools sort $CALLS_DIR/svim/$SAMPLE/variants.vcf | bcftools filter -e "POS > INFO/END" > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf
@@ -39,8 +39,8 @@ tabix -p vcf $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
 # 3. Filter out unplaced contigs
 bcftools view -R $CHR_BED $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf
 
-# 4. Filter for PASS and PRECISE calls and remove BNDs
-bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS.vcf
+# 4. Filter for PASS and PRECISE calls, remove BNDs and SVs supported by less than 2 reads
+bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND" & SUPPORT > 1' $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS.vcf
 
 # 5. Replace tag 'READS' by 'RNAMES' in header and in VCF fields
 sed -E 's/ID\=READS\,/ID\=RNAMES\,/' $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS.vcf | sed -E 's/;READS=/;RNAMES=/' > $CALLS_DIR/svim/"$SAMPLE"_PASS.vcf

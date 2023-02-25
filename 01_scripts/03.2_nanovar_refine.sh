@@ -41,3 +41,6 @@ iris genome_in=$GENOME vcf_in=$CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS_correcte
 rm $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS_correctedDUPs.vcf
 rm $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".txt
 rm $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS_correctedDUPs_dupToIns.vcf
+rm $CALLS_DIR/nanovar/$SAMPLE/resultsstore.txt
+rm $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_dupToIns.txt
+rm $CALLS_DIR/nanovar/$SAMPLE/list_dupToIns.txt

@@ -41,3 +41,6 @@ iris genome_in=$GENOME vcf_in=$CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_PASS_PRECISE
 rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_PASS_PRECISE_correctedDUPs.vcf
 rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".txt
 rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_PASS_PRECISE_correctedDUPs_dupToIns.vcf
+rm $CALLS_DIR/sniffles/$SAMPLE/resultsstore.txt
+rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_dupToIns.txt
+rm $CALLS_DIR/sniffles/$SAMPLE/list_dupToIns.txt

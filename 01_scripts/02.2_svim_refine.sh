@@ -36,3 +36,10 @@ jasmine file_list=$CALLS_DIR/svim/$SAMPLE/"$SAMPLE".txt out_dir=$CALLS_DIR/svim/
 # 3. Refine with iris
 iris genome_in=$GENOME vcf_in=$CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS_correctedDUPs_dupToIns.vcf reads_in=$BAM_DIR/"$SAMPLE".bam vcf_out=$CALLS_DIR/svim/"$SAMPLE"_PASS_refined_dupToIns.vcf --out_dir=$CALLS_DIR/svim/$SAMPLE --keep_long_variants --also_deletions --threads=$CPU
 
+
+# Clean up
+rm $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS_correctedDUPs.vcf
+rm $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".txt
+rm $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS_correctedDUPs_dupToIns.vcf
+
+

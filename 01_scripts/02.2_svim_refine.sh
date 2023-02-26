@@ -43,4 +43,4 @@ rm $CALLS_DIR/svim/$SAMPLE/"$SAMPLE".txt
 rm $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_PASS_correctedDUPs_dupToIns.vcf
 rm $CALLS_DIR/svim/$SAMPLE/resultsstore.txt
 rm $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_dupToIns.txt
-rm $CALLS_DIR/svim/$SAMPLE/list_dupToIns.txt
+#rm $CALLS_DIR/svim/$SAMPLE/list_dupToIns.txt

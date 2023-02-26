@@ -20,7 +20,7 @@ CALLS_DIR="05_calls"
 MERGED_DIR="06_merged"
 FILT_DIR="07_filtered"
 
-CPU=1
+CPU=10
 
 # LOAD REQUIRED MODULES
 #module load gcc python/3.10 bcftools/1.13 samtools/1.15 minimap2/2.24 blast+/2.13.0 bedtools/2.30.0 java/17.0.2 racon/1.4.13
@@ -42,5 +42,5 @@ rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_PASS_PRECISE_correctedDUPs.vcf
 rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".txt
 rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_PASS_PRECISE_correctedDUPs_dupToIns.vcf
 rm $CALLS_DIR/sniffles/$SAMPLE/resultsstore.txt
-rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_dupToIns.txt
+#rm $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_dupToIns.txt
 rm $CALLS_DIR/sniffles/$SAMPLE/list_dupToIns.txt

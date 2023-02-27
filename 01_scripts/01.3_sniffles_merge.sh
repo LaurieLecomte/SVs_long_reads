@@ -3,10 +3,10 @@
 # Merge refined sniffles SVs across samples with Jasmine
 
 # manitou
-# srun -c 10 -p medium --time=2-00:00:00 -J 01.3_sniffles_merge --mem=100G -o log/01.3_sniffles_merge_%j.log /bin/sh ./01_scripts/01.3_sniffles_merge.sh &
+# srun -c 8 -p medium --time=2-00:00:00 -J 01.3_sniffles_merge --mem=100G -o log/01.3_sniffles_merge_%j.log /bin/sh ./01_scripts/01.3_sniffles_merge.sh &
 
 # valeria
-# srun -c 10 -p ibis_medium --time=2-00:00:00 -J 01.3_sniffles_merge --mem=100G -o log/01.3_sniffles_merge_%j.log /bin/sh ./01_scripts/01.3_sniffles_merge.sh &
+# srun -c 8 -p ibis_medium --time=2-00:00:00 -J 01.3_sniffles_merge --mem=100G -o log/01.3_sniffles_merge_%j.log /bin/sh ./01_scripts/01.3_sniffles_merge.sh &
 
 # VARIABLES
 GENOME="03_genome/genome.fasta"
@@ -16,22 +16,18 @@ CALLS_DIR="05_calls"
 MERGED_DIR="06_merged"
 FILT_DIR="07_filtered"
 
-CPU=10
+CPU=8
 
 VCF_LIST_sniffles="$CALLS_DIR/sniffles/vcf_list.txt" # list of sniffles VCFs files
-BAM_LIST="$CALLS_DIR/sniffles/bam_list.txt" # list of bam files for each sample
 
-
-# 1. Make a list of sniffles VCF files to merge
+# 1. Make a list of sniffles sample VCF files to merge
 ls -1 $CALLS_DIR/sniffles/*refined_dupToIns.vcf > $VCF_LIST_sniffles
 
-# 2. Make a list of bam files
-#ls -1 $BAM_DIR/*.bam > $BAM_LIST
+# 2. Merge VCFs across samples 
+jasmine file_list=$VCF_LIST_sniffles out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
 
-# 3. Merge VCFs across samples 
-jasmine file_list=$VCF_LIST_sniffles out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --ignore_strand --ignore_merged_inputs --normalize_type --output_genotypes --allow_intrasample --mutual_distance --max_dist_linear=0.25 --threads=$CPU
-
-#jasmine file_list=$VCF_LIST_sniffles out_file=$MERGED_DIR/sniffles/merged_refined_distlin0.1_dist50.vcf out_dir=$MERGED_DIR/sniffles genome_file=$GENOME bam_list=$BAM_LIST --mutual_distance --output_genotypes --normalize_type --allow_intrasample --ignore_strand threads=$CPU --max_dist_linear=0.1 --min_dist=50 
+# 3. Convert INSs back to DUPs (out_file is the VCF to be postprocessed, will be modified in situ)
+jasmine out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
 
 
 # Clean up

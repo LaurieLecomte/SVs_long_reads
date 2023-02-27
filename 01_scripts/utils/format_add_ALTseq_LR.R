@@ -29,97 +29,168 @@ add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
     }
   }
   
-  # Reading the vcf from file wnad ignoring header lines
+  # Reading the vcf from file and ignoring header lines
   vcf <- read.table(input_vcf, comment.char = "#", stringsAsFactors = FALSE)
-  
-  # Creating indices vectors for each SV type
-  dels <- which(grepl("SVTYPE=DEL", vcf[[8]]))
-  ins  <- which(grepl("SVTYPE=INS", vcf[[8]]))
-  dups <- which(grepl("SVTYPE=DUP", vcf[[8]]))
-  invs <- which(grepl("SVTYPE=INV", vcf[[8]]))
   
   # Extracting some useful information for each variant
   chrs   <- vcf[[1]]
-  starts <- vcf[[2]]
+  #starts <- vcf[[2]]
   altseq <- vcf[[5]]
+  refseq <- vcf[[4]]
   #svlen  <- as.numeric(sub(".*SVLEN=(-?[0-9]+).*", "\\1", vcf[[8]]))
   #ends <- as.numeric(sub(".*;END=(-?[0-9]+).*", "\\1", vcf[[8]]))      ######### addition by me
   svtype <- sub(".*SVTYPE=([A-Z]+);.*", "\\1", vcf[[8]])
-  
+
   #ins_len <- as.numeric(sub(".*;INSLEN=(-?[0-9]+).*", "\\1", vcf[[8]]))  ######### addition by me
-  imprecise <- ifelse(grepl("IMPRECISE", vcf[[8]]), "IMPRECISE", "PRECISE")
+  #imprecise <-
+  #  ifelse(grepl("IMPRECISE", vcf[[8]]), "IMPRECISE", "PRECISE")
   
-  #consensus <- ifelse(grepl("CONSENSUS", vcf[[8]]), 
+  #consensus <- ifelse(grepl("CONSENSUS", vcf[[8]]),
   #                    sub(".*;CONSENSUS=([A-Z]+);.*", "\\1", vcf[[8]]),
   #                    NA) ######### addition by me, absent if imprecise
   
-  avg_starts <- floor(as.numeric(sub(".*;AVG_START=(-?[0-9.]+).*", "\\1", vcf[[8]])))
-  avg_ends <- floor(as.numeric(sub(".*;AVG_END=(-?[0-9.]+).*", "\\1", vcf[[8]])))
-  avg_lens <- floor(as.numeric(sub(".*;AVG_LEN=(-?[0-9.]+).*", "\\1", vcf[[8]])))
+  avg_starts <-
+    floor(as.numeric(sub(
+      ".*;AVG_START=(-?[0-9.]+).*", "\\1", vcf[[8]]
+    )))
+  avg_ends <-
+    floor(as.numeric(sub(".*;AVG_END=(-?[0-9.]+).*", "\\1", vcf[[8]])))
+  avg_lens <-
+    floor(as.numeric(sub(".*;AVG_LEN=(-?[0-9.]+).*", "\\1", vcf[[8]])))
   widths <- avg_ends - avg_starts ######### addition by me
   
-  
+  # refined or not by iris ?
+  #refined <- ifelse(grepl("IRIS_REFINED=1", vcf[[8]]),
+  #                  yes = 1,
+  #                  no = 0)
+
   supp_vecs <- sub(".*;SUPP_VEC=([0-1]+);.*", "\\1", vcf[[8]])
   supps <- sub(".*;SUPP=([0-9]+);.*", "\\1", vcf[[8]])
   
-  callers <- sapply(X = supp_vecs, FUN = function(x) {
-    switch(x, 
-           "100" = 'sniffles',
-           "110" = 'sniffles + svim',
-           "101" = 'sniffles + nanovar',
-           "010" = 'svim',
-           "011" = 'svim + nanovar',
-           "001" = 'svim',
-           "111" = 'sniffles + svim + nanovar') })
+  #callers <- sapply(
+  #  X = supp_vecs,
+  #  FUN = function(x) {
+  #    switch(
+  #      x,
+  #      "100" = 'sniffles',
+  #      "110" = 'sniffles + svim',
+  #      "101" = 'sniffles + nanovar',
+  #      "010" = 'svim',
+  #      "011" = 'svim + nanovar',
+  #      "001" = 'svim',
+  #      "111" = 'sniffles + svim + nanovar'
+  #    )
+  #  }
+  #)
   
+  
+  # Creating indices vectors for each SV type WITH MISSING ALT SEQs, which will need to be processed
+  dels <- which(altseq == '<DEL>')
+  ins <- which(altseq == '<INS>')
+  dups <- which(altseq == '<DUP>')
+  invs <- which(altseq == '<INV>')
+  
+  # Indice vector for variants that do have an ALT sequence
+  SVs_ALT <- setdiff(1:nrow(vcf), c(dels, ins, dups, invs))
+
   # Computing the replacement information for each variant
   del_info <- del_process(chrs[dels], avg_starts[dels], widths[dels], refgenome = refgenome)
   ins_info <- ins_process(chrs[ins],  avg_starts[ins], refgenome = refgenome, 
-                          avg_lens[ins], caller = callers[ins], altseq[ins])
+                          avg_lens[ins], altseq[ins])
   dup_info <- dup_process(chrs[dups], avg_starts[dups], widths[dups], refgenome = refgenome)
   inv_info <- inv_process(chrs[invs], avg_starts[invs], widths[invs], refgenome = refgenome)
   
-  # Assigning the results to the right columns of the vcf file
+  SV_ALT_info <- SV_ALT_process(start = avg_starts[SVs_ALT], ref_seq = refseq[SVs_ALT], alt_seq = altseq[SVs_ALT],
+                                sv_type = svtype[SVs_ALT], sv_len = avg_lens[SVs_ALT], sv_end = avg_ends[SVs_ALT])
+  
+  # Assigning the results to the right columns of the vcf file for each kind of SVs
+  ## DELs
   vcf[[2]][dels] <- del_info$pos
   vcf[[4]][dels] <- del_info$ref
   vcf[[5]][dels] <- del_info$alt
-  vcf[[8]][dels] <- paste0('SVTYPE=', del_info$svtype, ';SVLEN=', del_info$svlen, ';END=', del_info$end,
-                           ';SUPP_VEC=', supp_vecs[dels], ';SUPP=', supps[dels])
+  vcf[[8]][dels] <- paste0('SVTYPE=', del_info$svtype,
+                           ';SVLEN=', del_info$svlen,
+                           ';END=', del_info$end,
+                           ';SUPP_VEC=', supp_vecs[dels],
+                           ';SUPP=', supps[dels]
+    )
   
+  ## INSs
   vcf[[2]][ins]  <- ins_info$pos
   vcf[[4]][ins]  <- ins_info$ref
   vcf[[5]][ins]  <- ins_info$alt
-  vcf[[8]][ins] <- paste0('SVTYPE=', ins_info$svtype, ';SVLEN=', ins_info$svlen, ';END=', ins_info$end,
-                          ';SUPP_VEC=', supp_vecs[ins], ';SUPP=', supps[ins])
+  vcf[[8]][ins] <- paste0('SVTYPE=', ins_info$svtype,
+                          ';SVLEN=', ins_info$svlen,
+                          ';END=', ins_info$end,
+                          ';SUPP_VEC=', supp_vecs[ins],
+                          ';SUPP=', supps[ins]
+                          )
   
-  
+  ## DUPs
   vcf[[2]][dups] <- dup_info$pos
   vcf[[4]][dups] <- dup_info$ref
   vcf[[5]][dups] <- dup_info$alt
-  vcf[[8]][dups] <- paste0('SVTYPE=', dup_info$svtype, ';SVLEN=', dup_info$svlen, ';END=', dup_info$end,
-                           ';SUPP_VEC=', supp_vecs[dups], ';SUPP=', supps[dups])
+  vcf[[8]][dups] <- paste0('SVTYPE=', dup_info$svtype,
+                           ';SVLEN=', dup_info$svlen,
+                           ';END=', dup_info$end,
+                           ';SUPP_VEC=', supp_vecs[dups],
+                           ';SUPP=', supps[dups]
+                           )
   
+  ## INVs
   vcf[[4]][invs] <- inv_info$ref
   vcf[[5]][invs] <- inv_info$alt
-  vcf[[8]][invs] <- paste0('SVTYPE=', inv_info$svtype, ';SVLEN=', inv_info$svlen, ';END=', inv_info$end,
-                           ';SUPP_VEC=', supp_vecs[invs], ';SUPP=', supps[invs])
+  vcf[[8]][invs] <- paste0('SVTYPE=', inv_info$svtype,
+                           ';SVLEN=', inv_info$svlen,
+                           ';END=', inv_info$end,
+                           ';SUPP_VEC=', supp_vecs[invs],
+                           ';SUPP=', supps[invs]
+                           )
   
+  ## SVs with a known ALT seq
+  vcf[[4]][SVs_ALT] <- SV_ALT_info$ref
+  vcf[[5]][SVs_ALT] <- SV_ALT_info$alt
+  vcf[[8]][SVs_ALT] <- paste0('SVTYPE=', SV_ALT_info$svtype,
+                           ';SVLEN=', SV_ALT_info$svlen,
+                           ';END=', SV_ALT_info$end,
+                           ';SUPP_VEC=', supp_vecs[SVs_ALT],
+                           ';SUPP=', supps[SVs_ALT]
+  )
   
   # Format genotypes
-  for (i in 10:ncol(vcf)){
+  for (i in 10:ncol(vcf)) {
     vcf[[i]] <- sub("([0-1/.]+):.*", "\\1", vcf[[i]])
   }
   
   # Format FORMAT field
   vcf[[9]] <- 'GT'
   
-  
   # Writing the data.frame to the output file
-  write.table(vcf, file = output_con, sep = "\t", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  write.table(
+    vcf,
+    file = output_con,
+    sep = "\t",
+    quote = FALSE,
+    col.names = FALSE,
+    row.names = FALSE
+  )
   
   # Writing
   return(invisible(NULL))
 }
+
+
+# SVs with ALT seq --------------------------------------------------------
+SV_ALT_process <- function(start, ref_seq, alt_seq, sv_type, sv_len, sv_end) {
+  list(pos = start, 
+       ref = ref_seq, 
+       alt = alt_seq,
+       svlen = sv_len,
+       end = sv_end, 
+       svtype = sv_type
+       )
+} 
+
 
 # DELs --------------------------------------------------------------------
 del_process <- function(chr, start, width, refgenome) {
@@ -156,7 +227,7 @@ del_process <- function(chr, start, width, refgenome) {
 
 
 # INSs --------------------------------------------------------------------
-ins_process <- function(chr, start, refgenome, ins_length, caller, altseq) {
+ins_process <- function(chr, start, refgenome, ins_length, altseq) {
   
   # The start of the insertion must be offset by one
   pos <- ifelse(start == 1, 1, start - 1)
@@ -169,13 +240,7 @@ ins_process <- function(chr, start, refgenome, ins_length, caller, altseq) {
   ref <- Rsamtools::scanFa(refgenome, ref_range)
   #ref <- unname(as.character(ref))
   
-  
-  # The alternate sequence is the reference sequence to which the alt_seq is added
-  #alt <- paste0(cons, alt_seq)
-  # Add consensus seq as alt if consensus is not NA or if callers set includes delly
-  #alt <- if (grepl('delly', caller)) {
-  #  alt = cons
-  #  } 
+
   alt <- altseq
   
   # Returning the formatted information
@@ -224,9 +289,7 @@ dup_process <- function(chr, start, width, refgenome) {
 }
 
 
-
 # INVs --------------------------------------------------------------------
-
 inv_process <- function(chr, start, width, refgenome) {
   
   # In the inversion case, the variation truly starts at "start" so we need not update the position
@@ -273,3 +336,8 @@ revcomp <- function(sequence) {
   # Returning the inverted sequence
   paste0(rev(sequence), collapse = "")
 }
+
+
+
+
+

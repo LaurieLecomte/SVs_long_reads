@@ -2,6 +2,9 @@
 # Main function -----------------------------------------------------------
 add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
   
+  # Disable scientific notation
+  options(scipen=999)
+  
   # Checking if the reference genome has been supplied
   if(is.null(refgenome) || !file.exists(refgenome)) {
     stop("Reference genome file is not supplied or does not exist")
@@ -34,11 +37,17 @@ add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
   
   # Extracting some useful information for each variant
   chrs   <- vcf[[1]]
-  #starts <- vcf[[2]]
+  starts <- vcf[[2]]
   altseq <- vcf[[5]]
   refseq <- vcf[[4]]
-  #svlen  <- as.numeric(sub(".*SVLEN=(-?[0-9]+).*", "\\1", vcf[[8]]))
+  svlen  <- as.integer(sub(".*SVLEN=(-?[0-9]+).*", "\\1", vcf[[8]]))
   #ends <- as.numeric(sub(".*;END=(-?[0-9]+).*", "\\1", vcf[[8]]))      ######### addition by me
+  # END field can be at the beginning or in the middle of INFO fields, so we need to extract accordingly
+  ends <- ifelse(test = grepl("^END=", x = vcf[[8]]),
+                 yes = as.integer(sub("^END=(-?[0-9]+).*", "\\1", vcf[[8]])),
+                 no = as.integer(sub(".*;END=(-?[0-9]+).*", "\\1", vcf[[8]]))
+  )
+                 
   svtype <- sub(".*SVTYPE=([A-Z]+);.*", "\\1", vcf[[8]])
 
   #ins_len <- as.numeric(sub(".*;INSLEN=(-?[0-9]+).*", "\\1", vcf[[8]]))  ######### addition by me
@@ -49,15 +58,15 @@ add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
   #                    sub(".*;CONSENSUS=([A-Z]+);.*", "\\1", vcf[[8]]),
   #                    NA) ######### addition by me, absent if imprecise
   
-  avg_starts <-
-    floor(as.numeric(sub(
-      ".*;AVG_START=(-?[0-9.]+).*", "\\1", vcf[[8]]
-    )))
-  avg_ends <-
-    floor(as.numeric(sub(".*;AVG_END=(-?[0-9.]+).*", "\\1", vcf[[8]])))
-  avg_lens <-
-    floor(as.numeric(sub(".*;AVG_LEN=(-?[0-9.]+).*", "\\1", vcf[[8]])))
-  widths <- avg_ends - avg_starts ######### addition by me
+  #avg_starts <-
+  #  floor(as.numeric(sub(
+  #    ".*;AVG_START=(-?[0-9.]+).*", "\\1", vcf[[8]]
+  #  )))
+  #avg_ends <-
+  #  floor(as.numeric(sub(".*;AVG_END=(-?[0-9.]+).*", "\\1", vcf[[8]])))
+  #avg_lens <-
+  #  floor(as.numeric(sub(".*;AVG_LEN=(-?[0-9.]+).*", "\\1", vcf[[8]])))
+  widths <- ends - starts ######### addition by me
   
   # refined or not by iris ?
   #refined <- ifelse(grepl("IRIS_REFINED=1", vcf[[8]]),
@@ -65,7 +74,7 @@ add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
   #                  no = 0)
 
   supp_vecs <- sub(".*;SUPP_VEC=([0-1]+);.*", "\\1", vcf[[8]])
-  supps <- sub(".*;SUPP=([0-9]+);.*", "\\1", vcf[[8]])
+  supps <- as.integer(sub(".*;SUPP=([0-9]+);.*", "\\1", vcf[[8]]))
   
   #callers <- sapply(
   #  X = supp_vecs,
@@ -94,14 +103,14 @@ add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
   SVs_ALT <- setdiff(1:nrow(vcf), c(dels, ins, dups, invs))
 
   # Computing the replacement information for each variant
-  del_info <- del_process(chrs[dels], avg_starts[dels], widths[dels], refgenome = refgenome)
-  ins_info <- ins_process(chrs[ins],  avg_starts[ins], refgenome = refgenome, 
-                          avg_lens[ins], altseq[ins])
-  dup_info <- dup_process(chrs[dups], avg_starts[dups], widths[dups], refgenome = refgenome)
-  inv_info <- inv_process(chrs[invs], avg_starts[invs], widths[invs], refgenome = refgenome)
+  del_info <- del_process(chrs[dels], starts[dels], widths[dels], refgenome = refgenome)
+  ins_info <- ins_process(chrs[ins],  starts[ins], refgenome = refgenome, 
+                          svlen[ins], altseq[ins])
+  dup_info <- dup_process(chrs[dups], starts[dups], widths[dups], refgenome = refgenome)
+  inv_info <- inv_process(chrs[invs], starts[invs], widths[invs], refgenome = refgenome)
   
-  SV_ALT_info <- SV_ALT_process(start = avg_starts[SVs_ALT], ref_seq = refseq[SVs_ALT], alt_seq = altseq[SVs_ALT],
-                                sv_type = svtype[SVs_ALT], sv_len = avg_lens[SVs_ALT], sv_end = avg_ends[SVs_ALT])
+  SV_ALT_info <- SV_ALT_process(start = starts[SVs_ALT], ref_seq = refseq[SVs_ALT], alt_seq = altseq[SVs_ALT],
+                                sv_type = svtype[SVs_ALT], sv_len = svlen[SVs_ALT], sv_end = ends[SVs_ALT])
   
   # Assigning the results to the right columns of the vcf file for each kind of SVs
   ## DELs
@@ -182,11 +191,11 @@ add_ALT <- function(input_vcf, output_vcf, refgenome = NULL) {
 
 # SVs with ALT seq --------------------------------------------------------
 SV_ALT_process <- function(start, ref_seq, alt_seq, sv_type, sv_len, sv_end) {
-  list(pos = start, 
-       ref = ref_seq, 
-       alt = alt_seq,
-       svlen = sv_len,
-       end = sv_end, 
+  list(pos = as.integer(start), 
+       ref = as.character(ref_seq), 
+       alt = as.character(alt_seq),
+       svlen = as.integer(sv_len),
+       end = as.integer(sv_end), 
        svtype = sv_type
        )
 } 
@@ -216,11 +225,11 @@ del_process <- function(chr, start, width, refgenome) {
   alt <- Rsamtools::scanFa(refgenome, alt_range)
   
   # Returning the formatted information
-  list(pos = pos, 
+  list(pos = as.integer(pos), 
        ref = unname(as.character(ref)), 
        alt = unname(as.character(alt)),
-       svlen = (0 - width),
-       end = end, 
+       svlen = as.integer(0 - width),
+       end = as.integer(end), 
        svtype = 'DEL'
   )
 }
@@ -244,11 +253,11 @@ ins_process <- function(chr, start, refgenome, ins_length, altseq) {
   alt <- altseq
   
   # Returning the formatted information
-  list(pos = pos, 
+  list(pos = as.integer(pos), 
        ref = unname(as.character(ref)), 
        alt = alt,
-       svlen = ins_length,
-       end = pos,
+       svlen = as.integer(ins_length),
+       end = as.integer(pos),
        svtype = 'INS'
   )
 }
@@ -280,11 +289,11 @@ dup_process <- function(chr, start, width, refgenome) {
   ref <- Rsamtools::scanFa(refgenome, ref_range)
   
   # Returning the formatted information
-  list(pos = pos, 
+  list(pos = as.integer(pos), 
        ref = as.character(unname(ref)), 
        alt = as.character(unname(alt)),
-       svlen = width,
-       end = end,
+       svlen = as.integer(width),
+       end = as.integer(end),
        svtype = 'DUP')
 }
 
@@ -306,11 +315,11 @@ inv_process <- function(chr, start, width, refgenome) {
   # The alt sequence is simply the reverse complement
   alt <- sapply(unname(as.character(ref)), revcomp, USE.NAMES = FALSE)
   
-  list(pos = start, 
+  list(pos = as.integer(start), 
        ref = as.character(unname(ref)), 
        alt = alt,
-       svlen = width, 
-       end = end,
+       svlen = as.integer(width), 
+       end = as.integer(end),
        svtype = 'INV')
   
 }

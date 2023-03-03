@@ -24,10 +24,10 @@ VCF_LIST_SVIM="$CALLS_DIR/svim/vcf_list.txt" # list of svim VCFs files
 ls -1 $CALLS_DIR/svim/*refined_dupToIns.vcf > $VCF_LIST_SVIM
 
 # 2. Merge VCFs across samples 
-jasmine file_list=$VCF_LIST_SVIM out_file="$MERGED_DIR/svim/svim_PASS_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/svim genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
+jasmine file_list=$VCF_LIST_SVIM out_file="$MERGED_DIR/svim/svim_PASS_refined.vcf" out_dir=$MERGED_DIR/svim genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
 
 # 3. Convert INSs back to DUPs (out_file is the VCF to be postprocessed, will be modified in situ)
-jasmine out_file="$MERGED_DIR/svim/svim_PASS_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/svim genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
+jasmine out_file="$MERGED_DIR/svim/svim_PASS_refined.vcf" out_dir=$MERGED_DIR/svim genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
 
 
 # Clean up

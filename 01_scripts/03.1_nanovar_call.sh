@@ -42,8 +42,8 @@ tabix -p vcf $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz -f
 # 3. Filter out unplaced contigs
 bcftools view -R $CHR_BED $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf
 
-# 4. Filter for PASS calls, SVs other than BNDs and supported by more than 2 reads
-bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND" & SR > 1' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf
+# 4. Filter for PASS calls, SVs other than BNDs 
+bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE".vcf > $CALLS_DIR/nanovar/$SAMPLE/"$SAMPLE"_PASS.vcf
 
 # 5. Add read names
 ## Extract required info from VCF

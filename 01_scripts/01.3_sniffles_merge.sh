@@ -24,10 +24,10 @@ VCF_LIST_sniffles="$CALLS_DIR/sniffles/vcf_list.txt" # list of sniffles VCFs fil
 ls -1 $CALLS_DIR/sniffles/*refined_dupToIns.vcf > $VCF_LIST_sniffles
 
 # 2. Merge VCFs across samples 
-jasmine file_list=$VCF_LIST_sniffles out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
+jasmine file_list=$VCF_LIST_sniffles out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
 
 # 3. Convert INSs back to DUPs (out_file is the VCF to be postprocessed, will be modified in situ)
-jasmine out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
+jasmine out_file="$MERGED_DIR/sniffles/sniffles_PASS_PRECISE_refined.vcf" out_dir=$MERGED_DIR/sniffles genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
 
 
 # Clean up

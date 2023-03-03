@@ -24,10 +24,10 @@ VCF_LIST_NANOVAR="$CALLS_DIR/nanovar/vcf_list.txt" # list of nanovar VCFs files
 ls -1 $CALLS_DIR/nanovar/*refined_dupToIns.vcf > $VCF_LIST_NANOVAR
 
 # 2. Merge VCFs across samples 
-jasmine file_list=$VCF_LIST_NANOVAR out_file="$MERGED_DIR/nanovar/nanovar_PASS_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/nanovar genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
+jasmine file_list=$VCF_LIST_NANOVAR out_file="$MERGED_DIR/nanovar/nanovar_PASS_refined.vcf" out_dir=$MERGED_DIR/nanovar genome_file=$GENOME --ignore_strand --mutual_distance --allow_intrasample --output_genotypes --threads=$CPU
 
 # 3. Convert INSs back to DUPs (out_file is the VCF to be postprocessed, will be modified in situ)
-jasmine out_file="$MERGED_DIR/nanovar/nanovar_PASS_RSUPP2_refined.vcf" out_dir=$MERGED_DIR/svim out_dir=$MERGED_DIR/nanovar genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
+jasmine out_file="$MERGED_DIR/nanovar/nanovar_PASS_refined.vcf" out_dir=$MERGED_DIR/svim out_dir=$MERGED_DIR/nanovar genome_file=$GENOME --threads=$CPU --dup_to_ins --postprocess_only
 
 
 # Clean up

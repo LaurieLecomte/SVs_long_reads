@@ -29,7 +29,7 @@ sed -E 's/[0-9]+\_([A-Za-z0-9]+)/\1/' $MERGED_DIR/nanovar/nanovar_PASS_refined.o
 ## Paste old and new names in a single file to supply to bcftools reheader
 paste -d "\t" $MERGED_DIR/nanovar/nanovar_PASS_refined.old_names $MERGED_DIR/nanovar/nanovar_PASS_refined.new_names > $MERGED_DIR/nanovar/nanovar_PASS_refined.old_new_names
 
-# 2. Re-filter for PASS, number of supporting reads > 1 and wanted SVs types, then simplify VCF fields and sort
+# 2. Re-filter for PASS and wanted SVs types, then simplify VCF fields and sort
 bcftools filter -i 'FILTER="PASS" & SVTYPE!="BND"' $MERGED_DIR/nanovar/nanovar_PASS_refined.vcf | bcftools annotate -x ^INFO/SVTYPE,INFO/SVLEN,INFO/END,INFO/OLDTYPE,INFO/IRIS_REFINED | bcftools reheader -s $MERGED_DIR/nanovar/nanovar_PASS_refined.old_new_names | bcftools sort > $FILT_DIR/nanovar/nanovar_PASS.vcf
 
 # Clean up 

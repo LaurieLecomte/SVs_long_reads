@@ -23,13 +23,13 @@ FILT_DIR="07_filtered"
 CPU=1
 
 # 0. Create output dir
-#if [[ ! -d "$CALLS_DIR/svim/$SAMPLE" ]]
-#then
-#  mkdir "$CALLS_DIR/svim/$SAMPLE"
-#fi
+if [[ ! -d "$CALLS_DIR/svim/$SAMPLE" ]]
+then
+  mkdir "$CALLS_DIR/svim/$SAMPLE"
+fi
 
 # 1. Call SVs in whole genome
-#svim alignment $CALLS_DIR/svim/$SAMPLE $BAM_DIR/"$SAMPLE".bam $GENOME --insertion_sequences --read_names --sample $SAMPLE --max_consensus_length=500000 --interspersed_duplications_as_insertions
+svim alignment $CALLS_DIR/svim/$SAMPLE $BAM_DIR/"$SAMPLE".bam $GENOME --insertion_sequences --read_names --sample $SAMPLE --max_consensus_length=500000 --interspersed_duplications_as_insertions
 
 # 2. Sort, remove SVs where END is < than POS (usually happens if a SV is at POS 1 on an uplaced contig), then compress and index
 bcftools sort $CALLS_DIR/svim/$SAMPLE/variants.vcf | bcftools filter -e "POS > INFO/END" > $CALLS_DIR/svim/$SAMPLE/"$SAMPLE"_all_contigs.vcf

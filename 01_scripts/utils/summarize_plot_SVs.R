@@ -1,4 +1,4 @@
-# Summarize and plot merged SVs from short reads 
+# Summarize and plot merged SVs from long reads 
 # This script is made to be executed by the 01_scripts/utils/summarize_plot.sh script
 library(ggplot2)
 library(ggpubr)
@@ -435,4 +435,39 @@ filtered_bySVTYPE
 ## Save to rds object
 saveRDS(filtered_bySVTYPE, 
         file = paste0(strsplit(FILT, '.table')[[1]], 'filtered_callers_bySVTYPE_barplot.rds'))
+
+
+# Plot filtered SV count by SVTYPE, not callers 
+filtered_bySVTYPE_no_callers <- 
+  ggplot(data = filtered) +
+  geom_bar(aes(x = SVLEN_bin, fill = SVTYPE)) +
+  #facet_wrap(~SVTYPE, scales = 'free_y') +
+  #facet_grid(rows = vars(SVTYPE)) +
+  theme(
+    ## Plot title
+    plot.title = element_text(size = 10, face = 'bold', hjust = 0.5),
+    ## Axis
+    axis.text.x = element_text(angle = 45, size = 6, hjust = 1),
+    axis.text.y = element_text(size = 6, hjust = 1),
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    ## Legend
+    legend.title = element_text(size = 8, hjust = 0.5),
+    legend.text = element_text(size = 7),
+    legend.key.size = unit(5, 'mm')
+  ) +
+  labs(
+    x = "SV size (bp)",
+    y = "SV count",
+    fill = "SV type",
+    title = "Filtered LR SV count by type"
+  ) + 
+  scale_fill_manual(values = cols_svtypes)
+
+jpeg(paste0(strsplit(FILT, '.table')[[1]], 'filtered_callers_bySVTYPE_no_callers_barplot.jpg'))
+filtered_bySVTYPE_no_callers
+
+## Save to rds object
+saveRDS(filtered_bySVTYPE_no_callers, 
+        file = paste0(strsplit(FILT, '.table')[[1]], 'filtered_callers_bySVTYPE_no_callers_barplot.rds'))
 

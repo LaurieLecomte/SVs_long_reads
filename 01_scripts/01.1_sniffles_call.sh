@@ -24,7 +24,7 @@ then
 fi
 
 # 1. Call SVs in whole genome
-#sniffles --input $BAM_DIR/"$SAMPLE".bam --vcf $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz --snf $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".snf --threads $CPU --reference $GENOME --sample-id $SAMPLE --output-rnames --combine-consensus --allow-overwrite
+sniffles --input $BAM_DIR/"$SAMPLE".bam --vcf $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz --snf $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".snf --threads $CPU --reference $GENOME --sample-id $SAMPLE --output-rnames --combine-consensus --allow-overwrite
 
 # 2. Sort, remove SVs where END is < than POS (usually happens if a SV is at POS 1 on an uplaced contig) and remove unplaced contigs
 bcftools view -R $CHR_BED $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE"_all_contigs.vcf.gz | bcftools filter -e "POS > INFO/END" > $CALLS_DIR/sniffles/$SAMPLE/"$SAMPLE".vcf

@@ -5,14 +5,13 @@
 
 ## Pipeline Overview
 
-1. Prepare required regions files in .bed and .txt : `00_prepare_regions.sh`
-2. **Call SVs** : the 3 tools may be used independently in any order or at the same time.
-* 2.1. Sniffles : scripts `01.1` to `01.4`
+1. **Call SVs** : the 3 tools may be used independently in any order or at the same time.
+* 1.1. Sniffles : scripts `01.1` to `01.4`
 * 2.2. SVIM : scripts `02.1` to `02.4`
-* 2.2. NanoVar : scripts `03.1` to `03.4`
-3. **Merge SV calls** across callers : `04_merge_callers.sh`
-4. Format merged output : `05_format_merged.sh`
-5. **Filter** merged output : `06_filter_merged.sh` 
+* 3.2. NanoVar : scripts `03.1` to `03.4`
+4. **Merge SV calls** across callers : `04_merge_callers.sh`
+5. Format merged output : `05_format_merged.sh`
+6. **Filter** merged output : `06_filter_merged.sh` 
 
 
 ## Prerequisites
@@ -25,15 +24,13 @@
 * A sample IDs list in `02_infos`, one ID per line. This list can be used for renaming bam files symlinks in `$BAM_DIR`, adjust `grep` command as required (warning : use carefully): `less 02_infos/ind_ALL.txt | while read ID; do BAM_NAME=$(ls $BAM_DIR/*.bam | grep "$ID"); mv $BAM_NAME $BAM_DIR/"$ID".bam; done` and `less 02_infos/ind_ALL.txt | while read ID; do BAM_NAME=$(ls $BAM_DIR/*.bai | grep "$ID"); mv $BAM_NAME $BAM_DIR/"$ID".bam.bai; done`
 * A chromosomes list (or contigs, or sites) in `02_infos`. This list is used for parallelizing the SV calling step. It can be produced from the indexed genome file (`"$GENOME".fai`) : `less "$GENOME".fai | cut -f1 > 02_infos/chr_list.txt`
 * If some chromosomes are to be excluded from the SV calling step, such as unplaced contigs, these must be listed in `02_infos/excl_chrs.txt`, which needs to be encoded in linux format AND have a newline at the end.
-* A chromosomes list in the form of a bed file (`02_infos/chrs.bed`)
+* A chromosomes list in the form of a bed file (`02_infos/chrs.bed`). We use the one produced by `00_prepare_regions.sh` from the [SVs_SR_pipeline](https://github.com/LaurieLecomte/SVs_short_reads/blob/main/01_scripts/00_prepare_regions.sh)
 * A sample IDs list (`02_infos/ind_ALL.txt`), one ID per line
 
 
 ### Software
 
-
-#### For Manitou and Valeria users :
-
+#### For Manitou and Valeria users
 
 
 ## Detailed Walkthrough

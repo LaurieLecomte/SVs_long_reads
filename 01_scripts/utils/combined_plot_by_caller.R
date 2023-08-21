@@ -107,7 +107,13 @@ ggplot(data = merged_long_bycaller) +
     ## Legend
     legend.title = element_text(size = 8, hjust = 0.5),
     legend.text = element_text(size = 7),
-    legend.key.size = unit(5, 'mm')
+    legend.key.size = unit(5, 'mm'),
+    ## Background
+    panel.background = element_blank(),
+    panel.border = element_rect(color = 'black', fill = NA),
+    panel.grid = element_blank(),
+    #panel.grid.major.y = element_line(linewidth = 0.1, color = "black" ),
+    strip.background.y = element_rect(color = 'black')
   ) +
   labs(
     x = "SV length (bp)",
@@ -124,6 +130,15 @@ ggsave(filename = paste0(unlist(strsplit(MERGED, split = '.table'))[1],
        height = 2800,
        units = 'px',
        dpi = 600
+)
+
+ggsave(filename = paste0(unlist(strsplit(MERGED, split = '.table'))[1], 
+                         '_per_caller_type_size.pdf'),
+       width = 2600,
+       height = 2800,
+       units = 'px',
+       dpi = 600,
+       device = 'pdf'
 )
 
 # 2. Plot merged and filtered LR SV set -----------------------------------
@@ -168,9 +183,12 @@ ggplot(data = filt) +
     ## Legend
     legend.title = element_text(size = 8, hjust = 0.5),
     legend.text = element_text(size = 7),
-    legend.key.size = unit(5, 'mm')#,
+    legend.key.size = unit(5, 'mm'),
     ## Background
-    #panel.background = element_rect(fill = 'gray95')
+    panel.background = element_blank(),
+    panel.border = element_rect(color = 'black', fill = NA),
+    panel.grid = element_blank(),
+    #panel.grid.major.y = element_line(linewidth = 0.1, color = "black" ),
   ) +
   labs(
     x = "SV length (bp)",
@@ -190,3 +208,11 @@ ggsave(filename = paste0(unlist(strsplit(FILT, split = '.table'))[1],
        dpi = 600
 )
 
+ggsave(filename = paste0(unlist(strsplit(FILT, split = '.table'))[1], 
+                         '_per_type_size.pdf'),
+       width = 2600,
+       height = 2800,
+       units = 'px',
+       dpi = 600,
+       device = 'pdf'
+)

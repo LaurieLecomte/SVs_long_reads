@@ -3,8 +3,8 @@
 library(ggplot2)
 library(scales)
 
-MERGED <- "/mnt/ibis/lbernatchez/users/lalec31/RDC_Romaine/02_long_reads/SVs_long_reads/08_merged_union/merged_sniffles_svim_nanovar.table"
-FILT <- "/mnt/ibis/lbernatchez/users/lalec31/RDC_Romaine/02_long_reads/SVs_long_reads/09_filtered_union/merged_sniffles_svim_nanovar_SUPP2.table"
+MERGED <- "08_merged_union/merged_sniffles_svim_nanovar.table"
+FILT <- "09_filtered_union/merged_sniffles_svim_nanovar_SUPP2.table"
 
 CALLER1 <- 'Sniffles'
 CALLER2 <- 'SVIM'

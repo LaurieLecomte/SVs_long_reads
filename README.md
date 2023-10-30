@@ -14,6 +14,17 @@
 6. **Filter** merged output : `06_filter_merged.sh` 
 
 
+### Additional scripts
+
+Other scripts targeting a specific step or operation conducted in one of the main scripts or allowing additional analyses are provided in the `01_scripts/utils` subdirectory.
+
+* `01_scripts/utils/format_add_ALTseq_LR.R` : adds an explicit alternate sequence (when possible) to the merged SVs. Called by the `01_scripts/utils/format_merged.R` script featured in the `05_format_merged.sh` main script.
+* `01_scripts/utils/format_merged_sample_names.R` : add unique sample names to the merged VCF, also called by the `05_format_merged.sh` main script.
+* `01_scripts/utils/nanovar_add_rnames.R` : add unique sample names to the NanoVar VCF. Called by the `03.1_nanovar_call.sh` script.
+* `01_scripts/utils/combined_plot_by_caller.R` : used for plotting filtered short-read SVs, called by the `01_scripts/utils/summarize_plot.sh` script (Supp. Fig. 4 from the paper [Investigating structural variant, indel and single nucleotide polymorphism differentiation between locally adapted Atlantic salmon populations using whole genome sequencing and a hybrid genomic polymorphism detection approach](https://www.biorxiv.org/content/10.1101/2023.09.12.557169v1))
+
+Older scripts used for development or debugging purposes are stored in the `01_scripts/archive` folder for future reference if needed. These are not meant to be used in their current state and may be obsolete.
+
 ## Prerequisites
 
 ### Files

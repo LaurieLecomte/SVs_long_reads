@@ -32,11 +32,10 @@ Older scripts used for development or debugging purposes are stored in the `01_s
 * A reference genome named `genome.fasta` and its index (.fai) in `03_genome`
 * Bam files for all samples and their index. These can be soft-linked in the 04_bam folder for easier handling : if `$BAM_PATH` is the remote path to bam files, use `for file in $(ls -1 $BAM_PATH/*); do ln -s $file ./04_bam; done`. These should be named as `SAMPLEID.bam` (see sample ID list below).
 * A bam files list in `02_infos`. This list can be generated with the following command, where `$BAM_DIR` is the path of the directory where bam files are located : `ls -1 $BAM_DIR/*.bam > 02_infos/bam_list.txt`
-* A sample IDs list in `02_infos`, one ID per line. This list can be used for renaming bam files symlinks in `$BAM_DIR`, adjust `grep` command as required (warning : use carefully): `less 02_infos/ind_ALL.txt | while read ID; do BAM_NAME=$(ls $BAM_DIR/*.bam | grep "$ID"); mv $BAM_NAME $BAM_DIR/"$ID".bam; done` and `less 02_infos/ind_ALL.txt | while read ID; do BAM_NAME=$(ls $BAM_DIR/*.bai | grep "$ID"); mv $BAM_NAME $BAM_DIR/"$ID".bam.bai; done`
 * A chromosomes list (or contigs, or sites) in `02_infos`. This list is used for parallelizing the SV calling step. It can be produced from the indexed genome file (`"$GENOME".fai`) : `less "$GENOME".fai | cut -f1 > 02_infos/chr_list.txt`
 * If some chromosomes are to be excluded from the SV calling step, such as unplaced contigs, these must be listed in `02_infos/excl_chrs.txt`, which needs to be encoded in linux format AND have a newline at the end.
 * A chromosomes list in the form of a bed file (`02_infos/chrs.bed`). We use the one produced by `00_prepare_regions.sh` from the [SVs_SR_pipeline](https://github.com/LaurieLecomte/SVs_short_reads/blob/main/01_scripts/00_prepare_regions.sh)
-* A sample IDs list (`02_infos/ind_ALL.txt`), one ID per line
+* A sample IDs list in `02_infos`, one ID per line. This list can be used for renaming bam files symlinks in `$BAM_DIR`, adjust `grep` command as required (warning : use carefully): `less 02_infos/ind_ONT.txt | while read ID; do BAM_NAME=$(ls $BAM_DIR/*.bam | grep "$ID"); mv $BAM_NAME $BAM_DIR/"$ID".bam; done` and `less 02_infos/ind_ONT.txt | while read ID; do BAM_NAME=$(ls $BAM_DIR/*.bai | grep "$ID"); mv $BAM_NAME $BAM_DIR/"$ID".bam.bai; done`
 
 
 ### Software
@@ -52,8 +51,8 @@ Older scripts used for development or debugging purposes are stored in the `01_s
 
 Call SVs in all samples and remove unplaced contigs
 
-* On manitou : `parallel -a 02_infos/ind_ALL.txt -k -j 10 srun -c 1 --mem=20G -p medium --time=7-00:00 -J 01.1_sniffles_call_{} -o log/01.1_sniffles_call_{}_%j.log 01_scripts/01.1_sniffles_call.sh {} &`
-* On valeria : `parallel -a 02_infos/ind_ALL.txt -k -j 10 srun -c 1 --mem=20G -p ibis_medium --time=7-00:00 -J 01.1_sniffles_call_{} -o log/01.1_sniffles_call_{}_%j.log 01_scripts/01.1_sniffles_call.sh {} &`
+* On manitou : `parallel -a 02_infos/ind_ONT.txt -k -j 10 srun -c 1 --mem=20G -p medium --time=7-00:00 -J 01.1_sniffles_call_{} -o log/01.1_sniffles_call_{}_%j.log 01_scripts/01.1_sniffles_call.sh {} &`
+* On valeria : `parallel -a 02_infos/ind_ONT.txt -k -j 10 srun -c 1 --mem=20G -p ibis_medium --time=7-00:00 -J 01.1_sniffles_call_{} -o log/01.1_sniffles_call_{}_%j.log 01_scripts/01.1_sniffles_call.sh {} &`
 
 #### `01.2_sniffles_refine.sh`
 

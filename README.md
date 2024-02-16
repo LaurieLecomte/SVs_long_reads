@@ -1,7 +1,4 @@
-# SV calling pipeline from long read sequencing data
-
-## TO DO
-* Load required modules outside of scripts and correct versions for both manitou and valeria 
+# SV calling pipeline from long-read sequencing data
 
 ## Pipeline Overview
 
@@ -39,136 +36,82 @@ Older scripts used for development or debugging purposes are stored in the `01_s
 
 
 ### Software
+#### For Manitou users
+Custom conda environments are required for running `NanoVar`, `SVIM`, `sniffles2` and `jasmine`, as these programs are not available on Manitou; See the [Conda environment preparation](#conda-environment-preparation) section below. 
 
-#### For Manitou and Valeria users
+#### For users working with other computing clusters and servers
+The program versions specified in this pipeline refer to the versions available on IBIS' bioinformatics servers when this pipeline was built in 2021-2022, and are likely not available on all other servers. 
+Please add a '#' at the beginning of each line in the `#LOAD REQUIRED MODULES` section in each script (or remove these lines), and follow the [Conda environment preparation](#conda-environment-preparation) to create custom conda environments with correct program versions and dependencies.
+A R installation is also required.
 
 
 ## Detailed Walkthrough
 
-### Sniffles
+For running each script, copy the `srun` command from the script's header to the terminal and adjust parameters (memory, partition, time limit) if necessary.  
+The header also features a brief description of the script's contents. 
 
-#### `01.1_sniffles_call.sh`
 
-Call SVs in all samples and remove unplaced contigs
+### Conda environment preparation
 
-* On manitou : `parallel -a 02_infos/ind_ONT.txt -k -j 10 srun -c 1 --mem=20G -p medium --time=7-00:00 -J 01.1_sniffles_call_{} -o log/01.1_sniffles_call_{}_%j.log 01_scripts/01.1_sniffles_call.sh {} &`
-* On valeria : `parallel -a 02_infos/ind_ONT.txt -k -j 10 srun -c 1 --mem=20G -p ibis_medium --time=7-00:00 -J 01.1_sniffles_call_{} -o log/01.1_sniffles_call_{}_%j.log 01_scripts/01.1_sniffles_call.sh {} &`
+#### SV calling environments (`SVs_LR` + `NanoVar`)
+From the main directory, run `conda create --name SVs_LR --file SVs_LR_env.txt` and `conda create --name NanoVar --file NanoVar_env.txt`
 
-#### `01.2_sniffles_refine.sh`
+These environments are used for calling SVs and contain the following callers:
+* SVIM 2.0.0
+* Sniffles 2.0.7
+* NanoVar 1.3.8
+* bcftools 1.13
 
-Run Iris to refine SV sequences.
+#### SV merging environment (`jasmine_1.1.5`)
+From the main directory, run `conda create --name jasmine_1.1.5 --file jasmine_1.1.5_env.txt`
 
-* On manitou : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p medium --time=3-00:00:00 -J 01.2_sniffles_refine_{} --mem=80G -o log/01.2_sniffles_refine_{}_%j.log /bin/sh ./01_scripts/01.2_sniffles_refine.sh {} &`
+This environment is used for merging SVs across callers, and contains [jasmine 1.1.5](https://github.com/mkirsche/Jasmine) and bcftools 1.13.
 
-* On valeria : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p ibis_medium --time=7-00:00:00 -J 01.2_sniffles_refine_{} --mem=100G -o log/01.2_sniffles_refine_{}_%j.log /bin/sh ./01_scripts/01.2_sniffles_refine.sh {} &`
 
+### Main pipeline
 
-#### `01.3_sniffles_merge.sh`
+#### 1. Prepare region files (`00_prepare_regions.sh`)
 
- Merge refined Sniffles SVs across samples with Jasmine
+This script prepares the bed files required for specifying the regions in which SVs must be called or must not be called. It first produces a bed file from the reference fasta in order to yield : 
 
-* On manitou : `srun -c 8 -p medium --time=2-00:00:00 -J 01.3_sniffles_merge --mem=100G -o log/01.3_sniffles_merge_%j.log /bin/sh ./01_scripts/01.3_sniffles_merge.sh &`
+* A text and a bed file of excluded chromosomes or contigs
 
-* On valeria : `srun -c 8 -p ibis_medium --time=2-00:00:00 -J 01.3_sniffles_merge --mem=100G -o log/01.3_sniffles_merge_%j.log /bin/sh ./01_scripts/01.3_sniffles_merge.sh &`
 
+#### 2. Call SVs using 3 seperate tools
 
-#### `01.4_sniffles_filter_format.sh`
 
-Re-filter SVs called by Sniffles and format the multisample VCF
+##### Sniffles (scripts 01.1 to 01.4)
 
-* On manitou : `srun -c 1 -p small --time=1-00:00:00 -J 01.4_sniffles_filter_format --mem=20G -o log/01.4_sniffles_filter_format_%j.log /bin/sh ./01_scripts/01.4_sniffles_filter_format.sh &`
+Before running each script for Sniffles, activate the `SVs_LR` env: `conda activate SVs_LR`
 
-* On valeria : `srun -c 1 -p ibis_small --time=1-00:00:00 -J 01.4_sniffles_filter_format --mem=20G -o log/01.4_sniffles_filter_format_%j.log /bin/sh ./01_scripts/01.4_sniffles_filter_format.sh &`
+* `01.1_sniffles_call.sh`
+* `01.2_sniffles_refine.sh`
+* `01.3_sniffles_merge.sh`
+* `01.4_sniffles_filter_format.sh`
 
 
+##### SVIM (scripts 02.1 to 02.4)
+Before running each script for SVIM, activate the `SVs_LR` env: `conda activate SVs_LR`
 
+* `02.1_svim_call.sh`
+* `02.2_svim_refine.sh`
+* `02.3_svim_merge.sh`
+* `02.4_svim_filter_format.sh`
 
-### SVIM
 
-In parallel commands, replace the `-j 4` argument by the required number of samples.
+##### NanoVar (scripts 03.1 to 03.4)
+Before running each script for NanoVar, activate the `NanoVar` env: `conda activate NanoVar`
 
-#### `01.1_svim_call.sh`
+* `03.1_nanovar_call.sh`: **warning :**NanoVar indexes are picky and will crash if other indexes are present in the genome directory, so we need to provide a genome directory in which NanoVar can add its own indexes. Genome indexing steps prior to SV calling are very LONG, so we run run these steps only once for the first sample, then we run others
+* `03.2_nanovar_refine.sh`
+* `03.3_nanovar_merge.sh`
+* `03.4_nanovar_filter_format.sh`
 
-Call SVs with SVIM2 across whole genome, including unplaced contigs, which will be removed after
 
-* On valeria : svim cannot read sample names from -a arg of parallel.. no idea why
-* On manitou : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 1 -p ibis_small --mem=20G --time=1-00:00:00 -J 02.1_svim_call_{} -o log/02.1_svim_call_{}_%j.log /bin/sh ./01_scripts/02.1_svim_call.sh {} &`
+#### 3. Merge SV calls across callers (`04_merge_callers.sh`)
+Before running this script, activate the `jasmine_1.1.5` env (even if you are working on Manitou): `conda activate jasmine_1.1.5`
 
+#### 4. Format merged output (`05_format_merged.sh`)
 
-#### `01.2_svim_refine.sh`
-
-Run Iris to refine SV sequences.
-
-* On manitou : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p medium --time=3-00:00:00 -J 01.2_svim_refine_{} --mem=80G -o log/01.2_svim_refine_{}_%j.log /bin/sh ./01_scripts/01.2_svim_refine.sh {} &`
-
-* On valeria : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p ibis_medium --time=7-00:00:00 -J 01.2_svim_refine_{} --mem=100G -o log/01.2_svim_refine_{}_%j.log /bin/sh ./01_scripts/01.2_svim_refine.sh {} &`
-
-
-#### `01.3_svim_merge.sh`
-
- Merge refined svim SVs across samples with Jasmine
-
-* On manitou : `srun -c 8 -p medium --time=2-00:00:00 -J 01.3_svim_merge --mem=100G -o log/01.3_svim_merge_%j.log /bin/sh ./01_scripts/01.3_svim_merge.sh &`
-
-* On valeria : `srun -c 8 -p ibis_medium --time=2-00:00:00 -J 01.3_svim_merge --mem=100G -o log/01.3_svim_merge_%j.log /bin/sh ./01_scripts/01.3_svim_merge.sh &`
-
-
-#### `01.4_svim_filter_format.sh`
-
-Re-filter SVs called by svim and format the multisample VCF
-
-* On manitou : `srun -c 1 -p small --time=1-00:00:00 -J 01.4_svim_filter_format --mem=20G -o log/01.4_svim_filter_format_%j.log /bin/sh ./01_scripts/01.4_svim_filter_format.sh &`
-
-* On valeria : `srun -c 1 -p ibis_small --time=1-00:00:00 -J 01.4_svim_filter_format --mem=20G -o log/01.4_svim_filter_format_%j.log /bin/sh ./01_scripts/01.4_svim_filter_format.sh &`
-
-
-
-### NanoVar
-
-
-#### `01.1_nanovar_call.sh`
-
-Call SVs with Nanovar across whole genome, including unplaced contigs, which will be removed after
-
-**warning :**NanoVar indexes are picky and will crash if other indexes are present in the genome directory, so we need to provide a genome directory in which NanoVar can add its own indexes
-
-Genome indexing steps prior to SV calling are very LONG, so we run run these steps only once for the first sample, then we run others
-
-* Run on MANITOU only in a conda env : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p medium --time=3-00:00:00 -J 03.1_nanovar_call_{} --mem=100G -o log/03.1_nanovar_call_{}_%j.log /bin/sh ./01_scripts/03.1_nanovar_call.sh {} &`
-
-
-#### `01.2_nanovar_refine.sh`
-
-Run Iris to refine SV sequences.
-
-* On manitou : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p medium --time=3-00:00:00 -J 01.2_nanovar_refine_{} --mem=80G -o log/01.2_nanovar_refine_{}_%j.log /bin/sh ./01_scripts/01.2_nanovar_refine.sh {} &`
-
-* On valeria : `parallel -a 02_infos/ind_ONT.txt -j 4 srun -c 10 -p ibis_medium --time=7-00:00:00 -J 01.2_nanovar_refine_{} --mem=100G -o log/01.2_nanovar_refine_{}_%j.log /bin/sh ./01_scripts/01.2_nanovar_refine.sh {} &`
-
-
-#### `01.3_nanovar_merge.sh`
-
- Merge refined nanovar SVs across samples with Jasmine
-
-* On manitou : `srun -c 8 -p medium --time=2-00:00:00 -J 01.3_nanovar_merge --mem=100G -o log/01.3_nanovar_merge_%j.log /bin/sh ./01_scripts/01.3_nanovar_merge.sh &`
-
-* On valeria : `srun -c 8 -p ibis_medium --time=2-00:00:00 -J 01.3_nanovar_merge --mem=100G -o log/01.3_nanovar_merge_%j.log /bin/sh ./01_scripts/01.3_nanovar_merge.sh &`
-
-
-#### `01.4_nanovar_filter_format.sh`
-
-Re-filter SVs called by nanovar and format the multisample VCF, mainly by adding new read names to SVs
-
-* On manitou : `srun -c 1 -p small --time=1-00:00:00 -J 01.4_nanovar_filter_format --mem=20G -o log/01.4_nanovar_filter_format_%j.log /bin/sh ./01_scripts/01.4_nanovar_filter_format.sh &`
-
-* On valeria : `srun -c 1 -p ibis_small --time=1-00:00:00 -J 01.4_nanovar_filter_format --mem=20G -o log/01.4_nanovar_filter_format_%j.log /bin/sh ./01_scripts/01.4_nanovar_filter_format.sh &`
-
-
-
-### `04_merge_callers.sh`
-
-### `05_format_merged.sh`
-
-### `06_filter_merged.sh`
-
-
+#### 5. Filter merged SVs (`06_filter_merged.sh`)
+Keep SVs supported by at least 2/3 tools and larger than 50 bp.
